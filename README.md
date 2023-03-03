@@ -21,6 +21,7 @@ You can install these packages using pip:
 
 `pip install curses requests`
 
+![v1](v1.png)
 
 ## Usage
 
