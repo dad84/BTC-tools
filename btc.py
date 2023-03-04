@@ -38,6 +38,12 @@ def generate_key():
     return priv_key.to_string().hex(), address
 
 def main():
+    import os
+
+    if not os.path.exists('matches.txt'):
+        with open('matches.txt', 'w') as f:
+            f.write('')  # create an empty file
+
     with open('btc.txt', 'r') as f:
         target_addresses = sorted(f.read().splitlines())
 
