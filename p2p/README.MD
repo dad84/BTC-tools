@@ -1,3 +1,5 @@
+This is a theoretical test that I will attempt to implement. The goal is to have peers share the work so that the same addresses are not scanned repeatedly.
+
 If each peer generates their own seed value and scans all the keys in that seed, and then shares the results with the network,
 this could help distribute the work of scanning the key space across multiple peers and reduce the time it takes to find a match.
 
