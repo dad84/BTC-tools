@@ -12,7 +12,7 @@ Bitcoin private keys are used to sign transactions and prove ownership of Bitcoi
 The purpose of this script is to generate random Bitcoin private keys and corresponding addresses, and search for matches with a list of target addresses. The script can be used to find private keys that correspond to known Bitcoin addresses, which can be useful for recovering lost or stolen Bitcoin funds, or for conducting security audits of Bitcoin wallets and exchanges.
 
 # Prerequisites
-To use the bitcoin_address_finder.py script, you will need to have Python 3 installed on your system. You can download and install Python 3 from the official website: https://www.python.org/downloads/
+To use the btc.py script, you will need to have Python 3 installed on your system. You can download and install Python 3 from the official website: https://www.python.org/downloads/
 
 # Installation
 * Clone this repository to your local system.
