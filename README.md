@@ -62,3 +62,5 @@ Satoshi Nakamoto. Bitcoin: A Peer-to-Peer Electronic Cash System. https://bitcoi
 ECDSA Public Key Recovery. https://crypto.stackexchange.com/questions/18105/ecdsa-public-key-recovery
 Base58Check Encoding. https://en.bitcoin.it/wiki/Base58Check_encoding
 
+## Searching for private keys that do not belong to you without the owner's consent is illegal and unethical. It violates the privacy and property rights of the key owner and can result in criminal charges. The use of the Bitcoin Address Matcher program for illegal activities is strictly prohibited. It is important to use the program in a responsible and ethical manner and to respect the privacy and property rights of others. If you have any doubts about the legality of using the program for a particular purpose, you should consult with a legal professional.
+
