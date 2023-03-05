@@ -6,7 +6,7 @@ import json
 import pika
 
 # Set up socket
-HOST = '78.141.230.251'
+HOST = 'localhost'
 PORT = 12345
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
