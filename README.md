@@ -1,45 +1,64 @@
-# Bitcoin Address Finder
-This is a Python script that generates Bitcoin private keys and corresponding addresses, and searches for matches with a list of target Bitcoin addresses. The script uses the ECDSA algorithm with the SECP256k1 curve to generate the keys and addresses, and the Base58Check encoding scheme to encode the addresses.
+# Bitcoin Address Matcher
 
-## Background
-Bitcoin is a decentralized digital currency that uses a public ledger called the blockchain to record all transactions. Each transaction is identified by a unique Bitcoin address, which is a string of alphanumeric characters that typically begins with the number "1" or "3" for mainnet addresses, or "bc1" for native segwit addresses. Bitcoin addresses are generated using the ECDSA algorithm with the SECP256k1 curve, and are encoded using the Base58Check encoding scheme to ensure that they are error-resistant and easy to read.
+The Bitcoin Address Matcher is a program that scans Bitcoin addresses for matches to a set of target addresses. It uses distributed computing to process the search in parallel, with multiple clients scanning different ranges of keys. The program is implemented using a master-slave architecture, where a central server distributes key ranges to clients and collects results from them.
 
-The Bitcoin network is secured by a decentralized network of miners, who perform cryptographic calculations to validate transactions and add new blocks to the blockchain. Miners are incentivized to participate in the network by receiving newly created Bitcoin as a reward for each block they add to the blockchain. As of March 2023, the reward is 6.25 Bitcoin per block, with a new block being added to the blockchain approximately every 10 minutes.
+## Server
 
-Bitcoin private keys are used to sign transactions and prove ownership of Bitcoin addresses. Each private key corresponds to a unique public key, which in turn corresponds to a unique Bitcoin address. Private keys are typically generated using a secure random number generator, and should be kept secret and secure to prevent unauthorized access to the associated Bitcoin addresses and funds.
+The server is responsible for listening for incoming connections from clients and managing the distribution of key ranges. When a client connects to the server, it is assigned a unique ID and added to a list of active clients. The server then divides the range of keys to be scanned into smaller ranges and assigns each range to a client. The clients are responsible for scanning their assigned ranges of keys and reporting back to the server when they find a match.
 
-# Purpose
-The purpose of this script is to generate random Bitcoin private keys and corresponding addresses, and search for matches with a list of target addresses. The script can be used to find private keys that correspond to known Bitcoin addresses, which can be useful for recovering lost or stolen Bitcoin funds, or for conducting security audits of Bitcoin wallets and exchanges.
+The server also keeps track of progress and reports results back to clients. It maintains a dictionary of user data and progress data, and updates them as clients report progress and matches. When a client reports a match, the server sends a message to all connected clients indicating the address and private key of the match.
 
-# Prerequisites
-To use the btc.py script, you will need to have Python 3 installed on your system. You can download and install Python 3 from the official website: https://www.python.org/downloads/
+The server is implemented using Python 3 and the following libraries:
 
-# Installation
-* Clone this repository to your local system.
-* Navigate to the directory containing the `btc.txt file` and the `btc.py` script.
+- `ecdsa`
+- `base58`
+- `hashlib`
+- `pika`
 
-# Configuration
-* Open the btc.txt file in a text editor.
-* Add any Bitcoin addresses that you want to search for, one address per line. The script will search for exact matches with the target addresses, so make sure to include any prefixes or suffixes that may be present in the addresses (e.g. "1" or "3" for mainnet addresses, or "bc1" for native segwit addresses).
+The server can be run using the following command:
 
-# Usage
-* Open a terminal or command prompt and navigate to the directory containing the script.
-* Run the script using the following command:
- `btc.py`
-* The script will begin generating random private keys and corresponding addresses, and will search for matches with the target addresses. If a match is found, the script will output the address and private key to the console and save them to a file called `matches.txt` in the same directory as the script. If no match is found, the script will continue searching indefinitely.
- 
-# Limitations
-The bitcoin_address_finder.py script generates random Bitcoin private keys and addresses, and searches for matches with a list of target addresses. However, generating Bitcoin keys and addresses using a script like this can be risky, and should be done with caution and only for demonstration purposes. It is always best to use a trusted, well-tested Bitcoin wallet or key management tool to generate and manage your keys and addresses, and to follow best practices for secure key management and backup.
+`python3 server.py`
 
-It is important to note that the script is not guaranteed to find a match with the target addresses, as the probability of generating a private key that corresponds to a specific Bitcoin address is extremely low. The script simply generates random keys and searches for matches, so the search may take a long time or may never find a match.
 
-# Security Considerations
-Generating Bitcoin private keys and addresses using a script like this can be risky, as there is a high probability of generating weak or insecure keys that can be easily guessed or cracked by attackers. It is important to use a secure random number generator to generate the private keys, and to keep the keys and corresponding addresses secret and secure to prevent unauthorized access.
+## Client
 
-It is also important to properly manage and backup your Bitcoin addresses and funds, as the loss of a private key or the compromise of a Bitcoin address can result in the permanent loss of funds. It is recommended to use a trusted, well-tested Bitcoin wallet or key management tool to generate and manage your keys and addresses, and to follow best practices for secure key management and backup.
+The client is responsible for sending requests to the server for key ranges to scan. It then scans those key ranges for matches to the target addresses. The client uses a message queue to communicate with the server, allowing multiple clients to communicate with the server concurrently.
 
-# License
-This project is licensed under the MIT License
+When the client starts, it prompts the user for a username. It then connects to the server and sends a message requesting a key range to scan. The server responds with the start and end values for the range to be scanned. The client scans the keys in the range and reports back to the server when it finds a match.
 
-# Conclusion
-The btc.py script provides a simple way to generate Bitcoin private keys and addresses, and search for matches with a list of target addresses. However, generating Bitcoin keys and addresses using a script like this can be risky, and should be done with caution and only for demonstration purposes. It is always best to use a trusted, well-tested Bitcoin wallet or key management tool to generate and manage your keys and addresses, and to follow best practices for secure key management and backup.
+The client keeps track of progress and prints updates to the console as it scans keys. When a match is found, the client prints the address and private key of the match to the console and saves it to a file called `matches.txt`.
+
+The client is implemented using Python 3 and the following libraries:
+
+- `ecdsa`
+- `base58`
+- `hashlib`
+- `pika`
+- `socket`
+
+The client can be run using the following command:
+
+`python3 client.py`
+
+
+## Master-Slave Architecture
+
+The Bitcoin Address Matcher uses a master-slave architecture to distribute the workload of scanning Bitcoin addresses. In this architecture, the server acts as the master and the clients act as slaves. The server is responsible for dividing the range of keys to be scanned into smaller ranges and assigning each range to a client. The clients are responsible for scanning their assigned ranges of keys and reporting back to the server when they find a match.
+
+This architecture has several advantages over a traditional client-server architecture. First, it allows multiple clients to communicate with the server concurrently, which can improve performance and reduce the time it takes to scan a large number of keys. Second, it allows the workload to be distributed among multiple clients, which can help to reduce the processing time required to scan a large number of keys. Finally, it allows the system to scale easily as more clients can be added to the system to handle increased workloads.
+
+## Conclusion
+
+The Bitcoin Address Matcher is a program that scans Bitcoin addresses for matches to a set of target addresses. It uses distributed computing and a master-slave architecture to distribute the workload of scanning keys among multiple clients. This approach allows the program to scale easily and process large numbers of keys quickly.
+
+The program can be used for a variety of purposes, such as testing the security of Bitcoin addresses, recovering lost private keys, or simply searching for a specific address. It can also be modified to work with other cryptocurrencies that use public-private key pairs for address generation.
+
+The program has several limitations, however. First, it is only effective if the target addresses are known. If the target addresses are unknown, the program will have to scan the entire key space, which can be time-consuming and resource-intensive. Second, it assumes that the private keys are generated using the same algorithm as the Bitcoin protocol. If a different algorithm is used, the program may not be effective in finding matches. Finally, it assumes that the target addresses are vulnerable to brute-force attacks. If the target addresses are protected using strong encryption or other security measures, the program may not be effective.
+
+Despite these limitations, the Bitcoin Address Matcher is a powerful tool for scanning Bitcoin addresses for matches to a set of target addresses. It demonstrates the power of distributed computing and the effectiveness of master-slave architectures for handling large-scale computational tasks. The program can be used by researchers, security analysts, and anyone else interested in Bitcoin address security.
+
+## References
+Satoshi Nakamoto. Bitcoin: A Peer-to-Peer Electronic Cash System. https://bitcoin.org/bitcoin.pdf
+ECDSA Public Key Recovery. https://crypto.stackexchange.com/questions/18105/ecdsa-public-key-recovery
+Base58Check Encoding. https://en.bitcoin.it/wiki/Base58Check_encoding
+
