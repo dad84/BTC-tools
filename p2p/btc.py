@@ -2,68 +2,9 @@ import ecdsa
 import hashlib
 import base58
 import time
+import socket
+import threading
 import json
-
-class Block:
-    def __init__(self, index, timestamp, keys):
-        self.index = index
-        self.timestamp = timestamp
-        self.keys = keys
-        self.prev_hash = None
-        self.hash = self.calculate_hash()
-
-    def calculate_hash(self):
-        sha = hashlib.sha256()
-        sha.update(str(self.index).encode() +
-                   str(self.timestamp).encode() +
-                   str(self.keys).encode() +
-                   str(self.prev_hash).encode())
-        return sha.hexdigest()
-
-class Blockchain:
-    def __init__(self):
-        self.chain = [self.create_genesis_block()]
-        self.difficulty = 2
-
-    def create_genesis_block(self):
-        return Block(0, time.time(), [])
-
-    def get_latest_block(self):
-        return self.chain[-1]
-
-    def add_block(self, new_block):
-        new_block.prev_hash = self.get_latest_block().hash
-        new_block.hash = new_block.calculate_hash()
-        self.chain.append(new_block)
-
-    def is_valid(self):
-        for i in range(1, len(self.chain)):
-            current_block = self.chain[i]
-            prev_block = self.chain[i-1]
-
-            if current_block.hash != current_block.calculate_hash():
-                return False
-
-            if current_block.prev_hash != prev_block.hash:
-                return False
-
-        return True
-
-    def serialize(self, filename):
-        data = {
-            'chain': [block.__dict__ for block in self.chain],
-            'difficulty': self.difficulty
-        }
-
-        with open(filename, 'w') as f:
-            json.dump(data, f, indent=4)
-
-    def deserialize(self, filename):
-        with open(filename, 'r') as f:
-            data = json.load(f)
-
-        self.chain = [Block(**block_data) for block_data in data['chain']]
-        self.difficulty = data['difficulty']
 
 def generate_key():
     # Generate a 256-bit private key
@@ -106,38 +47,83 @@ def main():
         with open('matches.txt', 'w') as f:
             f.write('')  # create an empty file
 
-    blockchain = Blockchain()
-    block_keys = []
-
     with open('btc.txt', 'r') as f:
         target_addresses = sorted(f.read().splitlines())
 
-    while True:
-        priv_key_hex, address = generate_key()
-        block_keys.append((priv_key_hex, address))
+    # Create a TCP/IP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(('localhost', 10000))
+    sock.listen(5)
 
-        if len(block_keys) == 100000:
-            block = Block(len(blockchain.chain), time.time(), block_keys)
-            blockchain.add_block(block)
-            block_keys = []
+    nodes = []
 
-            # Print the hash of the new block for other peers to see
-            print(f'Block hash: {block.hash}')
+    # Thread to handle incoming connections
+    def handle_connection(conn):
+        node = {}
+        node['connection'] = conn
+        node['progress'] = []
+        nodes.append(node)
 
-        index = binary_search(target_addresses, address)
-        if index != -1:
-            # Save the private key and corresponding address to a text file
-            with open('matches.txt', 'a') as f:
-                f.write(f'Address: {address}, Private Key: {priv_key_hex}\n')
-            print(f'Address {address} matches a target address.')
-            break
-        else:
-            print(f'{address} not match.')
+        while True:
+            # Receive message from the connected node
+            data = conn.recv(1024)
+            if not data:
+                break
 
-    # Save the blockchain to a file
-    blockchain.serialize('blockchain.json')
+            # Parse the message
+            message = json.loads(data.decode())
 
-    input('Press enter to exit...')
+            if message['type'] == 'progress':
+                # Add the sender's progress to the list of nodes' progress
+                node['progress'].append(message['progress'])
+            elif message['type'] == 'match':
+                # Save the private key and corresponding address to a text file
+                with open('matches.txt', 'a') as f:
+                    f.write(f'Address: {message["address"]}, Private Key: {message["priv_key_hex"]}\n')
+                print(f'Address {message["address"]} matches a target address.')
+                # Broadcast the match message to all connected nodes
+                broadcast({'type': 'match', 'address': message['address'], 'priv_key_hex': message['priv_key_hex']})
+                break
+
+        # Remove the node from the list of nodes when the connection is closed
+        nodes.remove(node)
+
+    # Thread to periodically broadcast progress to all connected nodes
+    def broadcast_progress():
+        while True:
+            # Build the progress message
+            progress = {'start': nodes[0]['progress'][0]['start'], 'end': nodes[-1]['progress'][-1]['end'], 'timestamp': int(time.time())}
+            message = {'type': 'progress', 'progress': progress}
+
+            # Broadcast
+        broadcast(message)
+        time.sleep(5)
+
+# Thread to handle keyboard input for stopping the script
+def input_thread():
+    input()
+    # Build and broadcast the stop message
+    message = {'type': 'stop'}
+    broadcast(message)
+    sock.close()
+
+# Start the progress broadcast thread and input thread
+broadcast_thread = threading.Thread(target=broadcast_progress)
+broadcast_thread.daemon = True
+broadcast_thread.start()
+input_thread = threading.Thread(target=input_thread)
+input_thread.daemon = True
+input_thread.start()
+
+while True:
+    # Wait for a connection
+    conn, addr = sock.accept()
+
+    # Start a new thread to handle the connection
+    t = threading.Thread(target=handle_connection, args=(conn,))
+    t.daemon = True
+    t.start()
 
 def binary_search(lst, target):
     lo, hi = 0, len(lst) - 1
@@ -151,5 +137,11 @@ def binary_search(lst, target):
             return mid
     return -1
 
-if __name__ == '__main__':
-    main()
+def broadcast(message):
+    # Convert the message to JSON and send it to all connected nodes
+    data = json.dumps(message).encode()
+    for node in nodes:
+        try:
+            node['connection'].sendall(data)
+        except:
+            nodes.remove(node)
